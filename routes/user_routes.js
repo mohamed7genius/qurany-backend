@@ -3,11 +3,13 @@ require("../config/database").connect();
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const cors = require('cors')
 
 const User = require("../model/user");
 const auth = require("../middleware/auth");
 
 const user_rotes = express();
+user_rotes.use(cors())
 
 user_rotes.use(express.json({ limit: "50mb" }));
 
