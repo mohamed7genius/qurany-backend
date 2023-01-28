@@ -10,7 +10,6 @@ const auth = require("../middleware/auth");
 
 const user_rotes = express();
 user_rotes.use(cors())
-
 user_rotes.use(express.json({ limit: "50mb" }));
 
 user_rotes.post("/register", async (req, res) => {
@@ -94,7 +93,7 @@ user_rotes.post("/login", async (req, res) => {
   }
 });
 
-user_rotes.get("/welcome", auth, (req, res) => {
+user_rotes.get("/welcome", cors(),auth, (req, res) => {
   res.status(200).send("Welcome  ");
 });
 
