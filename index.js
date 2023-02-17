@@ -1,10 +1,27 @@
-const http = require("http");
-const user_rotes = require("./routes/user_routes");
-const server = http.createServer(user_rotes);
+const express = require('express');
+require("dotenv").config();
+const userRoutes = require('./routes/user_routes');
+const PORT = process.env.PORT || process.env.API_PORT || 5000;
+const cors = require('cors')
+const { verifyAPIKey } = require("./middleware/middleware");
 
-const { API_PORT } = process.env;
-const port = process.env.PORT || API_PORT;
+const app = express();
+app.use(express.json());
+app.use(cors({
+  origin: function(origin, callback){
+    // When testing there's no origin so when need to allow it in development
+    /* if( origin != 'http://localhost' ) {
+      return callback(`The CORS policy for this site is not allowed`, false);
+    } */
+    return callback(null, true);
+  },
+  credentials: true,
+}));
+app.use(verifyAPIKey);
 
-server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+
+app.use('/user', userRoutes);
+
+app.listen(PORT, function () {
+  console.log(`Server running on port ${PORT}`);
 });
