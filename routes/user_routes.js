@@ -1,25 +1,23 @@
-require("dotenv").config();
 require("../config/database").connect();
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const cors = require('cors')
+const { verifyToken } = require("../middleware/middleware");
 
 const User = require("../model/user");
-const auth = require("../middleware/auth");
+const userRoutes = express.Router();
 
-const user_rotes = express();
-user_rotes.use(cors())
-user_rotes.use(express.json({ limit: "50mb" }));
-
-user_rotes.post("/register", async (req, res) => {
+userRoutes.post("/register", async (req, res) => {
   try {
     // Get user input
-    const { first_name, last_name, email, password } = req.body;
+    const firstName = req.body.firstName;
+    const lastName = req.body.lastName;
+    const email = req.body.email;
+    const password = req.body.password;
 
     // Validate user input
-    if (!(email && password && first_name && last_name)) {
-      res.status(400).send("All input is required");
+    if (!(email && password && firstName && lastName)) {
+      res.status(400).json({ errorMessage: `missingInput` });
     }
 
     // check if user already exist
@@ -27,7 +25,7 @@ user_rotes.post("/register", async (req, res) => {
     const oldUser = await User.findOne({ email });
 
     if (oldUser) {
-      return res.status(409).send("User Already Exist. Please Login");
+      return res.status(409).json({ errorMessage: `alreadyExists` });
     }
 
     //Encrypt user password
@@ -35,8 +33,8 @@ user_rotes.post("/register", async (req, res) => {
 
     // Create user in our database
     const user = await User.create({
-      first_name,
-      last_name,
+      firstName,
+      lastName,
       email: email.toLowerCase(), //  convert email to lowercase
       password: encryptedPassword,
     });
@@ -56,17 +54,19 @@ user_rotes.post("/register", async (req, res) => {
     res.status(201).json(token);
   } catch (err) {
     console.log(err);
+    res.status(500).json({ errorMessage: `serverError` })
   }
 });
 
-user_rotes.post("/login", async (req, res) => {
+userRoutes.post("/login", async (req, res) => {
   try {
-    // Get user input
-    const { email, password } = req.body;
+    // Get user input : not descruting as it will throw different error code
+    const email = req.body.email;
+    const password = req.body.password;
 
     // Validate user input
     if (!(email && password)) {
-      res.status(400).send("All input is required");
+      res.status(400).json({ errorMessage: `missingInput` });
     }
     // Validate if user exist in our database
     const user = await User.findOne({ email });
@@ -87,26 +87,20 @@ user_rotes.post("/login", async (req, res) => {
       // user
       res.status(200).json(token);
     }
-    res.status(400).send("Invalid Credentials");
+    res.status(400).json({ errorMessage: `invalidCredentials` });
   } catch (err) {
     console.log(err);
+    res.status(500).json({ errorMessage: `serverError` });
   }
 });
 
-user_rotes.get("/welcome", cors(),auth, (req, res) => {
+userRoutes.get("/welcome", verifyToken, (req, res) => {
   res.status(200).send("Welcome  ");
 });
 
 // This should be the last route else any after it won't work
-user_rotes.use("*", (req, res) => {
-  res.status(404).json({
-    success: "false",
-    message: "Page not found",
-    error: {
-      statusCode: 404,
-      message: "You reached a route that is not defined on this server",
-    },
-  });
+userRoutes.use("*", (req, res) => {
+  res.status(404).json({ errorMessage: `notFound` });
 });
 
-module.exports = user_rotes;
+module.exports = userRoutes;
