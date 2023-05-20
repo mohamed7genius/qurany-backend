@@ -48,7 +48,7 @@ userRoutes.post("/register", async (req, res) => {
     user.token = token;
 
     // return new user
-    res.status(201).json(token);
+    res.status(201).json({token});
   } catch (err) {
     console.log(err);
     res.status(500).json({ errorMessage: `serverError` })
@@ -82,7 +82,7 @@ userRoutes.post("/login", async (req, res) => {
       user.token = token;
 
       // user
-      res.status(200).json(token);
+      res.status(200).json({token});
     }
     res.status(400).json({ errorMessage: `invalidCredentials` });
   } catch (err) {
