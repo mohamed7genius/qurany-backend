@@ -20,10 +20,9 @@ const verifyToken = (req, res, next) => {
 const verifyAPIKey = (req, res, next) => {
   const apiKey = req.header('api-key');
 
-  console.log('apiKey', apiKey, !apiKey);
+  console.log('apiKey', apiKey);
 
-  if ( !apiKey || apiKey != process.env.API_KEY  ) {
-    console.log('here')
+  if ( !apiKey || apiKey != (process.env.API_KEY || 'CTQ1OTRjYmRhN2EyMmRlMTE4NTc1YTk4NDE')  ) {
     return res.status(401).json({ errorMessage: `unauthorized` });
   }
 
