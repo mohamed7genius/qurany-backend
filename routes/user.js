@@ -1,4 +1,3 @@
-require("../config/database").connect();
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -10,13 +9,12 @@ const userRoutes = express.Router();
 userRoutes.post("/register", async (req, res) => {
   try {
     // Get user input
-    const firstName = req.body.firstName;
-    const lastName = req.body.lastName;
+    const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
 
     // Validate user input
-    if (!(email && password && firstName && lastName)) {
+    if (!(email && password && name )) {
       res.status(400).json({ errorMessage: `missingInput` });
     }
 
@@ -33,8 +31,7 @@ userRoutes.post("/register", async (req, res) => {
 
     // Create user in our database
     const user = await User.create({
-      firstName,
-      lastName,
+      name,
       email: email.toLowerCase(), //  convert email to lowercase
       password: encryptedPassword,
     });
@@ -44,7 +41,7 @@ userRoutes.post("/register", async (req, res) => {
       { user_id: user._id, email },
       process.env.TOKEN_KEY,
       {
-        expiresIn: "2h",
+        expiresIn: "1y",
       }
     );
     // save user token
@@ -77,7 +74,7 @@ userRoutes.post("/login", async (req, res) => {
         { user_id: user._id, email },
         process.env.TOKEN_KEY,
         {
-          expiresIn: "2h",
+          expiresIn: "1y",
         }
       );
 
@@ -94,8 +91,25 @@ userRoutes.post("/login", async (req, res) => {
   }
 });
 
-userRoutes.get("/welcome", verifyToken, (req, res) => {
-  res.status(200).send("Welcome  ");
+userRoutes.get("/scores", verifyToken, async (req, res) => {
+  const email = req.body?.email;
+  console.log('req', email);
+  if ( !req.body.email ) {
+    res.status(400).json({ errorMessage: `unregisteredUser` });
+  }
+
+  const users = await User.find({});
+  const usersScores = users.map((user) => {
+    const userScore = {
+      name: user.name,
+      score: user.score,
+    };
+    if ( user.email == email ) {
+      userScore[currentUser] = true;
+    }
+    return userScore;
+  });
+  res.status(200).send(JSON.stringify({ scores: usersScores.sort((p1, p2) => (p1.score < p2.score) ? 1 : (p1.score > p2.score) ? -1 : 0) }));
 });
 
 // This should be the last route else any after it won't work
