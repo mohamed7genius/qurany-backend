@@ -97,8 +97,8 @@ userRoutes.put("/update", verifyToken, async (req, res) => {
   const score = req.body?.score;
   const level = req.body?.level;
 
-  if ( !email || !score || !level ) {
-    res.status(400).json({ errorMessage: `missingInput` });
+  if ( !email ) {
+    res.status(400).json({ errorMessage: `missingInput_${email}` });
   }
 
   try {
