@@ -92,7 +92,7 @@ userRoutes.post("/login", async (req, res) => {
   }
 });
 
-userRoutes.get("/update", verifyToken, async (req, res) => {
+userRoutes.put("/update", verifyToken, async (req, res) => {
   const email = req.body?.email;
   const score = req.body?.score;
   const level = req.body?.level;
