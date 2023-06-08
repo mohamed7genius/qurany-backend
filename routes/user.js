@@ -107,7 +107,7 @@ userRoutes.put("/update", verifyToken, async (req, res) => {
     console.log(err);
     res.status(500).json({ errorMessage: `serverError` });
   }
-  res.status(200);
+  res.status(200).json({});
 });
 
 userRoutes.get("/scores", verifyToken, async (req, res) => {
