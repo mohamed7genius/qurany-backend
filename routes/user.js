@@ -98,7 +98,7 @@ userRoutes.put("/update", verifyToken, async (req, res) => {
   const level = req.body?.level;
 
   if ( !email ) {
-    res.status(400).json({ errorMessage: `missingInput_${email}` });
+    res.status(400).json({ errorMessage: `missingInput` });
   }
 
   try {
@@ -124,7 +124,7 @@ userRoutes.get("/scores", verifyToken, async (req, res) => {
       score: user.score,
     };
     if ( user.email == email ) {
-      userScore[currentUser] = true;
+      userScore.currentUser = true;
     }
     return userScore;
   });
