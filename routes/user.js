@@ -97,17 +97,17 @@ userRoutes.put("/update", verifyToken, async (req, res) => {
   const score = req.body?.score;
   const level = req.body?.level;
 
-  if ( !email ) {
+  if ( !email || !score || !level ) {
     res.status(400).json({ errorMessage: `missingInput` });
   }
 
   try {
     await User.findOneAndUpdate({ email }, { score, level });    
-    res.status(200);
   } catch ( err ) {
     console.log(err);
     res.status(500).json({ errorMessage: `serverError` });
   }
+  res.status(200);
 });
 
 userRoutes.get("/scores", verifyToken, async (req, res) => {
