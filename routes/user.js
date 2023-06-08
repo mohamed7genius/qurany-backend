@@ -110,7 +110,7 @@ userRoutes.put("/update", verifyToken, async (req, res) => {
   res.status(200).json({});
 });
 
-userRoutes.get("/scores", verifyToken, async (req, res) => {
+userRoutes.post("/scores", verifyToken, async (req, res) => {
   const email = req.body?.email;
   console.log('req', email);
   if ( !req.body.email ) {
