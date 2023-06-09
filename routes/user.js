@@ -131,6 +131,65 @@ userRoutes.post("/scores", verifyToken, async (req, res) => {
   res.status(200).send(JSON.stringify({ scores: usersScores.sort((p1, p2) => (p1.score < p2.score) ? 1 : (p1.score > p2.score) ? -1 : 0) }));
 });
 
+userRoutes.put("/level-score", verifyToken, async (req, res) => {
+  const email = req.body.email;
+  const level = req.body.level;
+  const score = req.body.score;
+
+  if (!(email && level && score)) {
+    res.status(400).json({ errorMessage: `missingInput` });
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    res.status(400).json({ errorMessage: `unregisteredUser` });
+  }
+
+  user.level = level;
+  user.score = score;
+  await user.save();
+
+  res.status(200).json({ message: `levelScoreUpdated` });
+})
+
+
+userRoutes.post("/send-email", async (req, res) => {
+  try {
+    const email = req.body.email;
+    const message = req.body.message;
+
+    if (!(email && message)) {
+      res.status(400).json({ errorMessage: `missingInput` });
+    }
+
+    // create reusable transporter object using the default SMTP transport
+    let transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USERNAME, // generated ethereal user
+        pass: process.env.SMTP_PASSWORD, // generated ethereal password
+      },
+    });
+
+    // send mail with defined transport object
+    let info = await transporter.sendMail({
+      from: `"${process.env.SMTP_SENDER_NAME}" <${process.env.SMTP_SENDER_EMAIL}>`, // sender address
+      to: email, // list of receivers
+      subject: "New message from user", // Subject line
+      text: message, // plain text body
+    });
+
+    console.log("Message sent: %s", info.messageId);
+    res.status(200).json({ message: "emailSent" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ errorMessage: `serverError` });
+  }
+});
+
 // This should be the last route else any after it won't work
 userRoutes.use("*", (req, res) => {
   res.status(404).json({ errorMessage: `notFound` });
