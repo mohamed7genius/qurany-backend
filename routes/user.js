@@ -91,46 +91,7 @@ userRoutes.post("/login", async (req, res) => {
   }
 });
 
-userRoutes.put("/update", verifyToken, async (req, res) => {
-  const email = req.body?.email;
-  const score = req.body?.score;
-  const level = req.body?.level;
-
-  if ( !email ) {
-    res.status(400).json({ errorMessage: `missingInput` });
-  }
-
-  try {
-    await User.findOneAndUpdate({ email }, { score, level });    
-  } catch ( err ) {
-    console.log(err);
-    res.status(500).json({ errorMessage: `serverError` });
-  }
-  res.status(200).json({});
-});
-
-userRoutes.post("/scores", verifyToken, async (req, res) => {
-  const email = req.body?.email;
-  console.log('req', email);
-  if ( !req.body.email ) {
-    res.status(400).json({ errorMessage: `unregisteredUser` });
-  }
-
-  const users = await User.find({});
-  const usersScores = users.map((user) => {
-    const userScore = {
-      name: user.name,
-      score: user.score,
-    };
-    if ( user.email == email ) {
-      userScore.currentUser = true;
-    }
-    return userScore;
-  });
-  res.status(200).send(JSON.stringify({ scores: usersScores.sort((p1, p2) => (p1.score < p2.score) ? 1 : (p1.score > p2.score) ? -1 : 0) }));
-});
-
-userRoutes.put("/register-guest", verifyToken, async (req, res) => {
+userRoutes.put("/register-guest", async (req, res) => {
   try {
     const email = req.body.email;
   const name = req.body.name;
@@ -179,8 +140,46 @@ userRoutes.put("/register-guest", verifyToken, async (req, res) => {
     console.log(err);
     res.status(500).json({ errorMessage: `serverError` })
   }
-})
+});
 
+userRoutes.put("/update", verifyToken, async (req, res) => {
+  const email = req.body?.email;
+  const score = req.body?.score;
+  const level = req.body?.level;
+
+  if ( !email ) {
+    res.status(400).json({ errorMessage: `missingInput` });
+  }
+
+  try {
+    await User.findOneAndUpdate({ email }, { score, level });    
+  } catch ( err ) {
+    console.log(err);
+    res.status(500).json({ errorMessage: `serverError` });
+  }
+  res.status(200).json({});
+});
+
+userRoutes.post("/scores", verifyToken, async (req, res) => {
+  const email = req.body?.email;
+  console.log('req', email);
+  if ( !req.body.email ) {
+    res.status(400).json({ errorMessage: `unregisteredUser` });
+  }
+
+  const users = await User.find({});
+  const usersScores = users.map((user) => {
+    const userScore = {
+      name: user.name,
+      score: user.score,
+    };
+    if ( user.email == email ) {
+      userScore.currentUser = true;
+    }
+    return userScore;
+  });
+  res.status(200).send(JSON.stringify({ scores: usersScores.sort((p1, p2) => (p1.score < p2.score) ? 1 : (p1.score > p2.score) ? -1 : 0) }));
+});
 
 userRoutes.post("/send-email", async (req, res) => {
   try {
