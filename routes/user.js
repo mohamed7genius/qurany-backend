@@ -18,7 +18,6 @@ userRoutes.post("/register", async (req, res) => {
       res.status(400).json({ errorMessage: `missingInput` });
     }
 
-    // check if user already exist
     // Validate if user exist in our database
     const oldUser = await User.findOne({ email });
 
@@ -131,26 +130,55 @@ userRoutes.post("/scores", verifyToken, async (req, res) => {
   res.status(200).send(JSON.stringify({ scores: usersScores.sort((p1, p2) => (p1.score < p2.score) ? 1 : (p1.score > p2.score) ? -1 : 0) }));
 });
 
-userRoutes.put("/level-score", verifyToken, async (req, res) => {
-  const email = req.body.email;
-  const level = req.body.level;
-  const score = req.body.score;
+userRoutes.put("/register-guest", verifyToken, async (req, res) => {
+  try {
+    const email = req.body.email;
+  const name = req.body.name;
+  const password = req.body.password;
+  const level = req.body.level || 0;
+  const score = req.body.score || 0;
 
-  if (!(email && level && score)) {
+  if (!(email && name && password)) {
     res.status(400).json({ errorMessage: `missingInput` });
   }
 
-  const user = await User.findOne({ email });
+  // Validate if user exist in our database
+  const oldUser = await User.findOne({ email });
 
-  if (!user) {
-    res.status(400).json({ errorMessage: `unregisteredUser` });
+  if (oldUser) {
+    return res.status(409).json({ errorMessage: `alreadyExists` });
   }
 
-  user.level = level;
-  user.score = score;
-  await user.save();
+  //Encrypt user password
+  const encryptedPassword = await bcrypt.hash(password, 10);
 
-  res.status(200).json({ message: `levelScoreUpdated` });
+  // Create user in our database
+  const user = await User.create({
+    name,
+    email: email.toLowerCase(), //  convert email to lowercase
+    password: encryptedPassword,
+    score,
+    level,
+  });
+
+  // Create token
+  const token = jwt.sign(
+    { user_id: user._id, email },
+    process.env.TOKEN_KEY,
+    {
+      expiresIn: "1y",
+    }
+  );
+  // save user token
+  user.token = token;
+
+  // return new user
+  res.status(201).json({ token, name: user.name, email: user.email });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ errorMessage: `serverError` })
+  }
 })
 
 
@@ -176,8 +204,8 @@ userRoutes.post("/send-email", async (req, res) => {
 
     // send mail with defined transport object
     let info = await transporter.sendMail({
-      from: `"${process.env.SMTP_SENDER_NAME}" <${process.env.SMTP_SENDER_EMAIL}>`, // sender address
-      to: email, // list of receivers
+      from: `Qurany app | ${email}`, // sender address
+      to: process.env.SMTP_EMAIL, // list of receivers
       subject: "New message from user", // Subject line
       text: message, // plain text body
     });
