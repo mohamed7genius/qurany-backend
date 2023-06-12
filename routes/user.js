@@ -162,6 +162,27 @@ userRoutes.put("/update", verifyToken, async (req, res) => {
   res.status(200).json({});
 });
 
+userRoutes.put("/update-account", verifyToken, async (req, res) => {
+  const email = req.body?.email;
+  const password = req.body?.password;
+  const name = req.body?.name;
+
+  if ( !email ) {
+    res.status(400).json({ errorMessage: `missingInput` });
+  }
+
+  //Encrypt user password
+  const encryptedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    await User.findOneAndUpdate({ email }, { password: encryptedPassword, name });    
+  } catch ( err ) {
+    console.log(err);
+    res.status(500).json({ errorMessage: `serverError` });
+  }
+  res.status(200).json({});
+});
+
 userRoutes.post("/scores", verifyToken, async (req, res) => {
   const email = req.body?.email;
   console.log('req', email);
