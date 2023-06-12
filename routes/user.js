@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { verifyToken } = require("../middleware/middleware");
+const { v4: uuidv4 } = require('uuid');
 
 const User = require("../model/user");
 const userRoutes = express.Router();
@@ -210,6 +211,49 @@ userRoutes.post("/send-email", async (req, res) => {
     });
 
     console.log("Message sent: %s", info.messageId);
+    res.status(200).json({ message: "emailSent" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ errorMessage: `serverError` });
+  }
+});
+
+userRoutes.put("/forgot-password", async (req, res) => {
+  try {
+    const email = req.body.email;
+
+    if (!email) {
+      res.status(400).json({ errorMessage: `missingInput` });
+    }
+
+    const newPassword = uuidv4().substring(0,10);
+
+    //Encrypt user password
+    const encryptedPassword = await bcrypt.hash(newPassword, 10);
+    await User.findOneAndUpdate({ email }, { passowrd: encryptedPassword }); 
+
+    const message = `Your new password is : ${newPassword}`;
+
+    // create reusable transporter object using the default SMTP transport
+    let transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USERNAME, // generated ethereal user
+        pass: process.env.SMTP_PASSWORD, // generated ethereal password
+      },
+    });
+
+    // send mail with defined transport object
+    let info = await transporter.sendMail({
+      from: `Qurany app`, // sender address
+      to: process.env.SMTP_EMAIL, // list of receivers
+      subject: `Qurany app | reset password `, // Subject line
+      text: message, // plain text body
+    });
+    
+
     res.status(200).json({ message: "emailSent" });
   } catch (err) {
     console.log(err);
